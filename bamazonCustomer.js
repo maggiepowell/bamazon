@@ -20,51 +20,54 @@ var connection = mysql.createConnection({
 connection.connect(function(err) {
   if (err) throw err;
   // run the start function after the connection is made to prompt the user
-  display();
+  displayItems();
 });
 
 // first display all of the items available for sale. Include the ids, names, and prices of products for sale.
-function display() {
+function displayItems() {
   // query the database for all items being auctioned
-  connection.query("SELECT item_id, product_name, price FROM products", function(err, results) {
-    if (err) throw err;
-    // once you have the items, prompt the user for which they'd like to bid on
-    inquirer
-      .prompt([
-        {
-          name: "choice",
-          type: "rawlist",
-          choices: function() {
-            var itemsAvailable = [];
-            for (var i = 0; i < results.length; i++) {
-              choiceArray.push(results[i]);
-            }
-            return itemsAvailable;
-          },
-          message: "Items available for sale:"
-        }
-      ])
-// then prompt users with two messages.
-      .then(function(answer) {
-//    * ask them the ID of the product they would like to buy.
-        inquirer
-        .prompt([
-          {
-            name: "askForId",
-            type: "input",
-            message: "What product ID would you like to purchase?"
-          },
-//    * ask how many units of the product they would like to buy.
-          {
-            name: "howManyUnits",
-            type: "input",
-            message: "How many units would you like to buy?"
-          }
-          ])
-        });
-      });
+  connection.query("SELECT item_id, product_name, price FROM products", 
+  queryDB()
+  );
   }
+
+  //function to query db for all items being auctioned
+function queryDB (err, results) {
+  if (err) throw err;
+  inquirer
+    .prompt([
+      {
+        name: "choice",
+        type: "list",
+        choices: function() {
+          var itemsAvailable = [];
+          for (var i = 0; i < results.length; i++) {
+            choiceArray.push(results[i]);
+          }
+          return itemsAvailable;
+        },
+        message: "Items available for sale:"
+      },
+//    * ask them the ID of the product they would like to buy.
+      {
+        name: "askForId",
+        type: "input",
+        message: "What product ID would you like to purchase?"
+      },
+//    * ask how many units of the product they would like to buy.
+      {
+        name: "howManyUnits",
+        type: "input",
+        message: "How many units would you like to buy?"
+      }
+  ])
 // once the customer has placed the order, check if your store has enough of the product to meet the customer's request.
+    .then(function(answer) {
+      inquirer
+      .prompt([
+        ])
+      });
+    }
 
 //    * If not, the app should log a phrase like `Insufficient quantity!`, and then prevent the order from going through.
 
