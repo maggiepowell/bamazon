@@ -1,6 +1,6 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
-
+var itemsAvailable = [];
 // create the connection information for the sql database
 var connection = mysql.createConnection({
   host: "localhost",
@@ -25,35 +25,39 @@ connection.connect(function(err) {
 
 // first display all of the items available for sale. Include the ids, names, and prices of products for sale.
 function displayItems() {
+
   // query the database for all items being auctioned
   connection.query("SELECT item_id, product_name, price FROM products", 
-  queryDB()
+  function(err, results) {
+    if (err) throw err;
+    itemsAvailable = [];
+    for (var i = 0; i < results.length; i++) {
+      itemsAvailable.push(results[i].product_name);
+    }
+    queryDB(results[i])
+  },
   );
   }
 
   //function to query db for all items being auctioned
 function queryDB (err, results) {
   if (err) throw err;
+  console.log(results);
+
   inquirer
     .prompt([
       {
         name: "choice",
         type: "list",
-        choices: function() {
-          var itemsAvailable = [];
-          for (var i = 0; i < results.length; i++) {
-            choiceArray.push(results[i]);
-          }
-          return itemsAvailable;
-        },
+        choices: itemsAvailable,
         message: "Items available for sale:"
       },
-//    * ask them the ID of the product they would like to buy.
-      {
-        name: "askForId",
-        type: "input",
-        message: "What product ID would you like to purchase?"
-      },
+// //    * ask them the ID of the product they would like to buy.
+//       {
+//         name: "askForId",
+//         type: "input",
+//         message: "What product ID would you like to purchase?"
+//       },
 //    * ask how many units of the product they would like to buy.
       {
         name: "howManyUnits",
@@ -63,13 +67,19 @@ function queryDB (err, results) {
   ])
 // once the customer has placed the order, check if your store has enough of the product to meet the customer's request.
     .then(function(answer) {
-      inquirer
-      .prompt([
-        ])
-      });
+      var chosenItem;
+        if (results[i].stock_quantity > answer.howManyUnits) {
+          chosenItem = results[i];
+          console.log("We have enough stock!");
+        }
+        //If not, the app should log a phrase like `Insufficient quantity!`, and then prevent the order from going through.
+        else {
+          console.log("Insufficient quantity!");
+          displayItems();
+        }
+    });
     }
 
-//    * If not, the app should log a phrase like `Insufficient quantity!`, and then prevent the order from going through.
 
 // if your store _does_ have enough of the product, you should fulfill the customer's order.
 //    * This means updating the SQL database to reflect the remaining quantity.
